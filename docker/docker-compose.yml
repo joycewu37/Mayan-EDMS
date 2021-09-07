@@ -12,7 +12,6 @@ x-mayan-container:
     # Enable to use RabbitMQ
     # MAYAN_CELERY_BROKER_URL: amqp://${MAYAN_RABBITMQ_USER:-mayan}:${MAYAN_RABBITMQ_PASSWORD:-mayanrabbitpass}@rabbitmq:5672/${MAYAN_RABBITMQ_VHOST:-mayan}
     # To use RabbitMQ as broker, disable Redis as broker
-    PYTHONDONTWRITEBYTECODE: 1
     MAYAN_CELERY_BROKER_URL: redis://:${MAYAN_REDIS_PASSWORD:-mayanredispassword}@redis:6379/0
     MAYAN_CELERY_RESULT_BACKEND: redis://:${MAYAN_REDIS_PASSWORD:-mayanredispassword}@redis:6379/1
     MAYAN_DATABASES: "{'default':{'ENGINE':'django.db.backends.postgresql','NAME':'${MAYAN_DATABASE_NAME:-mayan}','PASSWORD':'${MAYAN_DATABASE_PASSWORD:-mayandbpass}','USER':'${MAYAN_DATABASE_USER:-mayan}','HOST':'${MAYAN_DATABASE_HOST:-postgresql}'}}"
@@ -26,9 +25,7 @@ x-mayan-container:
     - bridge
   restart: unless-stopped
   volumes:
-    - ${PWD}/data/app:/var/lib/mayan
-    - ${PWD}/mayan/apps/appearance/static/appearance/css:/opt/mayan-edms/static/appearance/css
-    - ${PWD}/mayan:/opt/mayan-edms/lib/python3.7/site-packages/mayan
+    - ${MAYAN_APP_VOLUME:-app}:/var/lib/mayan
     # Optional volumes to access external data like staging or watch folders
     # - /opt/staging_files:/staging_files
     # - /opt/watch_folder:/watch_folder
@@ -40,6 +37,11 @@ networks:
 services:
   app:
     <<: *mayan-container
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app.rule=Host(`www.example.com`)"  # Replace this with your published URL
+      - "traefik.http.routers.mayan.rule=Host(`mayan.app`)"
+      - "traefik.http.routers.mayan.entrypoints=web"
     ports:
       - "80:8000"
 
@@ -65,12 +67,12 @@ services:
     image: postgres:${MAYAN_DOCKER_POSTGRES_TAG:-10.15-alpine}
     networks:
       - bridge
-    # Disable to allow external access to the database.    
+    # Disable to allow external access to the database.
     # ports:
     #  - "5432:5432"
     restart: unless-stopped
     volumes:
-      - ${PWD}/data/postgres:/var/lib/postgresql/data
+      - ${MAYAN_POSTGRES_VOLUME:-postgres}:/var/lib/postgresql/data
 
   redis:
     command:
@@ -96,7 +98,7 @@ services:
       - bridge
     restart: unless-stopped
     volumes:
-      - ${PWD}/data/redis:/data
+      - ${MAYAN_REDIS_VOLUME:-redis}:/data
 
   # Celery flower a monitor for Celery
   celery_flower:
@@ -128,7 +130,7 @@ services:
     devices:
       - "/dev/fuse:/dev/fuse"
     entrypoint:
-      - /bin/bash
+      - /bin/sh
       - -c
       - 'mkdir --parents /mnt/index && chown mayan:mayan /mnt/index && /usr/local/bin/entrypoint.sh run_command "mountindex --allow-other creation_date /mnt/index"'  # Replace "creation_date" with the index of your choice.
     profiles:
@@ -206,6 +208,8 @@ services:
   #     RABBITMQ_DEFAULT_VHOST: ${MAYAN_RABBITMQ_VHOST:-mayan}
   #   networks:
   #     - bridge
+  #   ports:
+  #     - "15672:15672"
   #   restart: unless-stopped
   #   volumes:
   #      - ${MAYAN_RABBITMQ_VOLUME:-rabbitmq}:/var/lib/rabbitmq
