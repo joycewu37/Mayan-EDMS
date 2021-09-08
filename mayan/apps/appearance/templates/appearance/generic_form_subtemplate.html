@@ -83,8 +83,8 @@
                         {% if submit_label %}{{ submit_label }}{% else %}{% if form.instance %}{% trans 'Save' %}{% else %}{% trans 'Submit' %}{% endif %}{% endif %}
                     </button>
                     {% if previous %}
-                          &nbsp;<a class="btn btn-default" onclick='history.back();'>
-                            <i class="fa fa-times"></i> {% if cancel_label %}{{ cancel_label }}{% else %}{% trans 'Cancel' %}{% endif %}
+                    &nbsp;<a class="btn btn-default" onclick='history.back();' style="background-color:#3a2d29">
+                        <i class="fa fa-times"></i> {% if cancel_label %}{{ cancel_label }}{% else %}{% trans 'Cancel' %}{% endif %}
                           </a>
                     {% endif %}
 
