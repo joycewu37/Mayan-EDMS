@@ -16,3 +16,13 @@ jobs:
       run: make docker-build
     - name: Run tests
       run: make docker-runtest-all
+
+    - name: Python linters isort check
+      # You may pin to the exact commit or the version.
+      # uses: jose-lpa/python-isort-check-action@2771d85881d110b809fa0de367a5b5f6f0f3ff08
+      uses: jose-lpa/python-isort-check-action@1.0.0
+      with:
+        # File or directory to run isort on.
+        path: . # optional, default is .
+        # Path of the settings file to be used by isort.
+        settings-path: . # optional, default is .
